@@ -1,3 +1,4 @@
+@file:OptIn(kotlin.ExperimentalUnsignedTypes::class)
 package aegis
 
 import kotlin.test.Test
@@ -5,10 +6,10 @@ import kotlin.test.*
 import kotlin.time.measureTime
 import kotlin.time.DurationUnit.MILLISECONDS
 
-fun String.hexToArray(): Array<UByte> {
+fun String.hexToArray(): UByteArray {
   check(length % 2 == 0) { "Must have an even length" }
 
-  return Array<UByte>(length / 2) {
+  return UByteArray(length / 2) {
     Integer.parseInt(this, it * 2, (it + 1) * 2, 16).toUByte()
   }
 }
@@ -107,8 +108,8 @@ class AegisTest {
   @Test fun benchmarkEncrypt() {
     val key = "10010000000000000000000000000000".hexToArray();
     val nonce = "10000200000000000000000000000000".hexToArray();
-    val data = Array<UByte>(0){ 0u };
-    val msg = Array<UByte>(102400){ 0u };
+    val data = UByteArray(0){ 0u };
+    val msg = UByteArray(102400){ 0u };
     val n = 1000;
     val c = Aegis128L()
 
@@ -128,8 +129,8 @@ class AegisTest {
   @Test fun benchmarkDecrypt() {
     val key = "10010000000000000000000000000000".hexToArray();
     val nonce = "10000200000000000000000000000000".hexToArray();
-    val data = Array<UByte>(0){ 0u };
-    val msg = Array<UByte>(102400){ 0u };
+    val data = UByteArray(0){ 0u };
+    val msg = UByteArray(102400){ 0u };
     val n = 1000;
     val c = Aegis128L()
     val tag = c.seal(key, nonce, msg, data);

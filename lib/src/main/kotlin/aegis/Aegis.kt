@@ -1,11 +1,12 @@
+@file:OptIn(kotlin.ExperimentalUnsignedTypes::class)
 package aegis
 
 const val KEYSIZE = 16
 const val NONCESIZE = 16
 
-private val CONST0: Array<UInt> = arrayOf(0x02010100u, 0xd080503u, 0x59372215u, 0x6279e990u)
-private val CONST1: Array<UInt> = arrayOf(0x55183ddbu, 0xf12fc26du, 0x42311120u, 0xdd28b573u)
-private var t = Array<Array<UInt>>(4) { Array<UInt>(256) { 0u } }
+private val CONST0: UIntArray = uintArrayOf(0x02010100u, 0xd080503u, 0x59372215u, 0x6279e990u)
+private val CONST1: UIntArray = uintArrayOf(0x55183ddbu, 0xf12fc26du, 0x42311120u, 0xdd28b573u)
+private var t = Array<UIntArray>(4) { UIntArray(256) { 0u } }
 
 private fun init() {
   if (t[0][0] != 0u) {
@@ -56,8 +57,8 @@ private fun init() {
   }
 }
 
-private fun uIntArrayToUByteArray(input: Array<UInt>): Array<UByte> {
-  val output = Array<UByte>(4 * input.size){ 0u }
+private fun uIntArrayToUByteArray(input: UIntArray): UByteArray {
+  val output = UByteArray(4 * input.size){ 0u }
 
   for ((i, v) in input.withIndex()) {
     output[4*i+0] = v.toUByte()
@@ -69,12 +70,12 @@ private fun uIntArrayToUByteArray(input: Array<UInt>): Array<UByte> {
   return output
 }
 
-private fun uByteArrayToUIntArray(input: Array<UByte>): Array<UInt> {
+private fun uByteArrayToUIntArray(input: UByteArray): UIntArray {
   var size = input.size / 4
   if (input.size % 4 != 0) {
     size++
   }
-  val output = Array<UInt>(size){ 0u }
+  val output = UIntArray(size){ 0u }
 
   for ((i, v) in input.withIndex()) {
     output[i/4] = output[i/4] xor (v.toUInt() shl 8*(i%4))
@@ -83,15 +84,15 @@ private fun uByteArrayToUIntArray(input: Array<UByte>): Array<UInt> {
   return output
 }
 
-private fun xor128Into(value: Array<UInt>, dst: Array<UInt>, dstOffset: Int) {
+private fun xor128Into(value: UIntArray, dst: UIntArray, dstOffset: Int) {
   dst[dstOffset + 0] = dst[dstOffset + 0] xor value[0]
   dst[dstOffset + 1] = dst[dstOffset + 1] xor value[1]
   dst[dstOffset + 2] = dst[dstOffset + 2] xor value[2]
   dst[dstOffset + 3] = dst[dstOffset + 3] xor value[3]
 }
 
-private fun extract(a: Array<UInt>, b: Array<UInt>, c: Array<UInt>, d: Array<UInt>): Array<UInt> {
-  return arrayOf(
+private fun extract(a: UIntArray, b: UIntArray, c: UIntArray, d: UIntArray): UIntArray {
+  return uintArrayOf(
     (a[0] and b[0]) xor c[0] xor d[0],
     (a[1] and b[1]) xor c[1] xor d[1],
     (a[2] and b[2]) xor c[2] xor d[2],
@@ -99,15 +100,15 @@ private fun extract(a: Array<UInt>, b: Array<UInt>, c: Array<UInt>, d: Array<UIn
   )
 }
 
-private fun zeroPad(data: Array<UByte>): Array<UInt> {
+private fun zeroPad(data: UByteArray): UIntArray {
   if (data.size % 32 == 0) {
     return uByteArrayToUIntArray(data)
   }
   val padLen = 32 - data.size % 32
-  return uByteArrayToUIntArray(data + Array<UByte>(padLen){ 0u })
+  return uByteArrayToUIntArray(data + UByteArray(padLen){ 0u })
 }
 
-private fun round(src: Array<UInt>, key: Array<UInt>, dst: Array<UInt>) {
+private fun round(src: UIntArray, key: UIntArray, dst: UIntArray) {
   val src8 = uIntArrayToUByteArray(src)
   val x0 = t[0][src8[0].toInt()]  xor t[1][src8[5].toInt()]  xor t[2][src8[10].toInt()] xor t[3][src8[15].toInt()]
   val x1 = t[0][src8[4].toInt()]  xor t[1][src8[9].toInt()]  xor t[2][src8[14].toInt()] xor t[3][src8[3].toInt()]
@@ -120,7 +121,7 @@ private fun round(src: Array<UInt>, key: Array<UInt>, dst: Array<UInt>) {
   dst[3] = key[3] xor x3
 }
 
-private fun tagValid(a: Array<UByte>, b: Array<UByte>): Boolean {
+private fun tagValid(a: UByteArray, b: UByteArray): Boolean {
   var equal = true
   for (i in 0 until a.size) {
     equal = equal and (a[i] == b[i])
@@ -129,13 +130,13 @@ private fun tagValid(a: Array<UByte>, b: Array<UByte>): Boolean {
 }
 
 class Aegis128L {
-  private var s: Array<Array<UInt>> = Array<Array<UInt>>(8) { Array<UInt>(4) { 0u } }
+  private var s: Array<UIntArray> = Array<UIntArray>(8) { UIntArray(4) { 0u } }
 
   init {
     init()
   }
 
-  private fun update(a: Array<UInt>, aOffset: Int, b: Array<UInt>, bOffset: Int) {
+  private fun update(a: UIntArray, aOffset: Int, b: UIntArray, bOffset: Int) {
     val t = s[7].copyOf()
 
     round(this.s[6], this.s[7], this.s[7])
@@ -160,7 +161,7 @@ class Aegis128L {
     round(t, this.s[0], this.s[0])
   }
 
-  private fun process(key: Array<UByte>, nonce: Array<UByte>, msg: Array<UByte>, data: Array<UByte>, decrypt: Boolean): Array<UByte> {
+  private fun process(key: UByteArray, nonce: UByteArray, msg: UByteArray, data: UByteArray, decrypt: Boolean): UByteArray {
     check(key.size == KEYSIZE) { "invalid key size" }
     check(nonce.size == NONCESIZE) { "invalid nonce size" }
 
@@ -233,7 +234,7 @@ class Aegis128L {
 
     // Generate tag. Note that the encoding here restricts data and message length to
     // 2^32 instead of 2^64 as per the specification.
-    var tag: Array<UInt> = arrayOf(dataLen.toUInt()*8u, 0u, msgLen.toUInt()*8u, 0u)
+    var tag: UIntArray = uintArrayOf(dataLen.toUInt()*8u, 0u, msgLen.toUInt()*8u, 0u)
     xor128Into(this.s[2], tag, 0)
     for (i in 0 until 7) {
       update(tag, 0, tag, 0)
@@ -248,11 +249,11 @@ class Aegis128L {
     return uIntArrayToUByteArray(tag)
   }
 
-  fun seal(key: Array<UByte>, nonce: Array<UByte>, msg: Array<UByte>, data: Array<UByte>): Array<UByte> {
+  fun seal(key: UByteArray, nonce: UByteArray, msg: UByteArray, data: UByteArray): UByteArray {
     return this.process(key, nonce, msg, data, false)
   }
 
-  fun open(key: Array<UByte>, nonce: Array<UByte>, msg: Array<UByte>, data: Array<UByte>, tag: Array<UByte>) {
+  fun open(key: UByteArray, nonce: UByteArray, msg: UByteArray, data: UByteArray, tag: UByteArray) {
     val tagDecrypt = this.process(key, nonce, msg, data, true)
     if (!tagValid(tag, tagDecrypt)) {
       msg.fill(0u)
