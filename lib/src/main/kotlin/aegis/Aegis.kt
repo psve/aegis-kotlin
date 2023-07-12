@@ -108,17 +108,15 @@ private fun zeroPad(data: UByteArray): UIntArray {
   return uByteArrayToUIntArray(data + UByteArray(padLen){ 0u })
 }
 
-private fun round(src: UIntArray, key: UIntArray, dst: UIntArray) {
-  val src8 = uIntArrayToUByteArray(src)
-  val x0 = t[0][src8[0].toInt()]  xor t[1][src8[5].toInt()]  xor t[2][src8[10].toInt()] xor t[3][src8[15].toInt()]
-  val x1 = t[0][src8[4].toInt()]  xor t[1][src8[9].toInt()]  xor t[2][src8[14].toInt()] xor t[3][src8[3].toInt()]
-  val x2 = t[0][src8[8].toInt()]  xor t[1][src8[13].toInt()] xor t[2][src8[2].toInt()]  xor t[3][src8[7].toInt()]
-  val x3 = t[0][src8[12].toInt()] xor t[1][src8[1].toInt()]  xor t[2][src8[6].toInt()]  xor t[3][src8[11].toInt()]
+private fun UIntArray.getByte(idx: Int): Int {
+  return ((this[idx/4] shr 8*(idx%4)) and 0xffu).toInt()
+}
 
-  dst[0] = key[0] xor x0
-  dst[1] = key[1] xor x1
-  dst[2] = key[2] xor x2
-  dst[3] = key[3] xor x3
+private fun round(src: UIntArray, key: UIntArray, dst: UIntArray) {
+  dst[0] = key[0] xor t[0][src.getByte(0)]  xor t[1][src.getByte(5)]  xor t[2][src.getByte(10)] xor t[3][src.getByte(15)]
+  dst[1] = key[1] xor t[0][src.getByte(4)]  xor t[1][src.getByte(9)]  xor t[2][src.getByte(14)] xor t[3][src.getByte(3)]
+  dst[2] = key[2] xor t[0][src.getByte(8)]  xor t[1][src.getByte(13)] xor t[2][src.getByte(2)]  xor t[3][src.getByte(7)]
+  dst[3] = key[3] xor t[0][src.getByte(12)] xor t[1][src.getByte(1)]  xor t[2][src.getByte(6)]  xor t[3][src.getByte(11)]
 }
 
 private fun tagValid(a: UByteArray, b: UByteArray): Boolean {
