@@ -215,19 +215,15 @@ class Aegis128L {
       if (decrypt) {
         // Recreate zero padding if needed
         if (msgLen < (i+1)*32) {
-          // TODO: This is very inefficient
-          var x = msgArray.toUByteArray()
-          for (j in msgLen until x.size) {
-            x[j] = 0u
+          for (j in msgLen until msgArray.size*4) {
+            msgArray[j/4] = msgArray[j/4] xor (msgArray[j/4] and (0xffu shl 8*(j%4)))
           }
-          msgArray = x.toUIntArray()
         }
         update(msgArray, i*8, msgArray, i*8+4)
       }
     }
-    var x = msgArray.toUByteArray()
     for (i in 0 until msg.size) {
-      msg[i] = x[i]
+      msg[i] = msgArray.getByte(i).toUByte()
     }
 
     // Generate tag. Note that the encoding here restricts data and message length to

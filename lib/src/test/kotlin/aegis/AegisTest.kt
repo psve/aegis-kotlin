@@ -110,7 +110,7 @@ class AegisTest {
     val nonce = "10000200000000000000000000000000".hexToArray();
     val data = UByteArray(0){ 0u };
     val msg = UByteArray(102400){ 0u };
-    val n = 1000;
+    val n = 10000;
     val c = Aegis128L()
 
     val d = measureTime({
@@ -131,7 +131,7 @@ class AegisTest {
     val nonce = "10000200000000000000000000000000".hexToArray();
     val data = UByteArray(0){ 0u };
     val msg = UByteArray(102400){ 0u };
-    val n = 1000;
+    val n = 10000;
     val c = Aegis128L()
     val tag = c.seal(key, nonce, msg, data);
 
