@@ -57,10 +57,10 @@ private fun init() {
   }
 }
 
-private fun uIntArrayToUByteArray(input: UIntArray): UByteArray {
-  val output = UByteArray(4 * input.size){ 0u }
+private fun UIntArray.toUByteArray(): UByteArray {
+  val output = UByteArray(4 * this.size){ 0u }
 
-  for ((i, v) in input.withIndex()) {
+  for ((i, v) in this.withIndex()) {
     output[4*i+0] = v.toUByte()
     output[4*i+1] = (v shr 8).toUByte()
     output[4*i+2] = (v shr 16).toUByte()
@@ -70,14 +70,14 @@ private fun uIntArrayToUByteArray(input: UIntArray): UByteArray {
   return output
 }
 
-private fun uByteArrayToUIntArray(input: UByteArray): UIntArray {
-  var size = input.size / 4
-  if (input.size % 4 != 0) {
+private fun UByteArray.toUIntArray(): UIntArray {
+  var size = this.size / 4
+  if (this.size % 4 != 0) {
     size++
   }
   val output = UIntArray(size){ 0u }
 
-  for ((i, v) in input.withIndex()) {
+  for ((i, v) in this.withIndex()) {
     output[i/4] = output[i/4] xor (v.toUInt() shl 8*(i%4))
   }
 
@@ -102,10 +102,10 @@ private fun extract(a: UIntArray, b: UIntArray, c: UIntArray, d: UIntArray): UIn
 
 private fun zeroPad(data: UByteArray): UIntArray {
   if (data.size % 32 == 0) {
-    return uByteArrayToUIntArray(data)
+    return data.toUIntArray()
   }
   val padLen = 32 - data.size % 32
-  return uByteArrayToUIntArray(data + UByteArray(padLen){ 0u })
+  return (data + UByteArray(padLen){ 0u }).toUIntArray()
 }
 
 private fun UIntArray.getByte(idx: Int): Int {
@@ -166,8 +166,8 @@ class Aegis128L {
     val msgLen = msg.size
     val dataLen = data.size
 
-    val keyArray = uByteArrayToUIntArray(key)
-    val nonceArray = uByteArrayToUIntArray(nonce)
+    val keyArray = key.toUIntArray()
+    val nonceArray = nonce.toUIntArray()
     var msgArray = zeroPad(msg)
     val dataArray = zeroPad(data)
 
@@ -216,16 +216,16 @@ class Aegis128L {
         // Recreate zero padding if needed
         if (msgLen < (i+1)*32) {
           // TODO: This is very inefficient
-          var x = uIntArrayToUByteArray(msgArray)
+          var x = msgArray.toUByteArray()
           for (j in msgLen until x.size) {
             x[j] = 0u
           }
-          msgArray = uByteArrayToUIntArray(x)
+          msgArray = x.toUIntArray()
         }
         update(msgArray, i*8, msgArray, i*8+4)
       }
     }
-    var x = uIntArrayToUByteArray(msgArray)
+    var x = msgArray.toUByteArray()
     for (i in 0 until msg.size) {
       msg[i] = x[i]
     }
@@ -244,7 +244,7 @@ class Aegis128L {
     xor128Into(this.s[4], tag, 0)
     xor128Into(this.s[5], tag, 0)
     xor128Into(this.s[6], tag, 0)
-    return uIntArrayToUByteArray(tag)
+    return tag.toUByteArray()
   }
 
   fun seal(key: UByteArray, nonce: UByteArray, msg: UByteArray, data: UByteArray): UByteArray {
