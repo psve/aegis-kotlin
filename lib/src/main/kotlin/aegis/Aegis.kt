@@ -13,8 +13,8 @@ private fun init() {
     return
   }
 
-  var d = Array(256) { _ -> 0u}
-  var th = Array(256) { _ -> 0u}
+  val d = Array(256) { _ -> 0u}
+  val th = Array(256) { _ -> 0u}
 
   for (i in 0u until 256u) {
     val v = (i shl 1) xor (i shr 7)*283u
@@ -168,7 +168,7 @@ class Aegis128L {
 
     val keyArray = key.toUIntArray()
     val nonceArray = nonce.toUIntArray()
-    var msgArray = zeroPad(msg)
+    val msgArray = zeroPad(msg)
     val dataArray = zeroPad(data)
 
     // Initialize
